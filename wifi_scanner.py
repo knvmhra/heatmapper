@@ -8,7 +8,7 @@ from typing import Tuple
 
 def get_rssi():
     cwlan_interface = CoreWLAN.CWInterface.interface()
-    return cwlan_interface.ssid()
+    return cwlan_interface.rssiValue()
 
 class WifiKernel(Kernel):
     def __init__(self, router_pos) -> None:
@@ -119,18 +119,40 @@ def create_heatmap(measurements: Tuple[float, float, float], router_pos: Tuple[f
 
     return fig
 
-
-if __name__ == "__main__":
+def main():
+    # Load measurements
+    measurements = np.loadtxt('measurements.csv', delimiter=',', skiprows= 1)
     
-    room_bounds = (0, 20, 0, 10)
-
-    router_pos = (3, 4)
-
-    measurements = generate_synthetic_wifi_data(router_pos= router_pos, room_bounds=room_bounds, n_points= 10)
-
-    fig = create_heatmap(measurements= measurements, router_pos= router_pos, room_bounds= room_bounds, grid_size=20)
-
+    # Load router position
+    router_pos = tuple(np.loadtxt('router.csv', delimiter=',', skiprows=1))
+    # Get room bounds from actual data
+    room_bounds = (
+        np.min(measurements[:, 0]),  # x min
+        np.max(measurements[:, 0]),  # x max
+        np.min(measurements[:, 1]),  # y min
+        np.max(measurements[:, 1])   # y max
+    )
+    
+    # Convert measurements to list of tuples for your existing code
+    measurements_list = [tuple(m) for m in measurements]
+    
+    # Create heatmap with floorplan background
+    fig = create_heatmap(
+        measurements=measurements_list,
+        router_pos=router_pos,
+        room_bounds=room_bounds,
+        grid_size=50
+    )
+    
+    # Add floorplan as background
+    floorplan = plt.imread('B1.png')
+    ax = fig.gca()
+    ax.imshow(floorplan, extent=list(room_bounds), alpha=0.5)
+    
     plt.show()
+
+if __name__ == "__main__": 
+    main()
 
 
 
